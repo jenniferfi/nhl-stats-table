@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>NHL Stats</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h1,
+        h3 {
+            text-align: center;
+        }
+
+        a {
+            align-content: center;
+        }
+
+        table {
+            width: 90%;
+            margin: 0.2em auto;
+            border-collapse: collapse;
+        }
+
+        tr:nth-of-type(2n) {
+            background: rgb(231, 253, 226);
+        }
+
+        tr:nth-of-type(2n+1) {
+            background: rgb(253, 255, 250);
+        }
+
+        thead>tr>th {
+            background: rgb(226, 253, 219);
+            text-align: left;
+            padding: 5px;
+        }
+
+        td {
+            padding: 2px 20px;
+        }
+        a {
+            text-decoration: none;
+            color: rgb(26, 129, 0);
+            padding: 4px 10px;
+        }
+        a:hover{
+            background-color:rgb(26, 129, 0);
+            color: white;
+        }
+        #NHL {
+            border: 1px solid green;
+            border-radius: 30px;
+        }
+    </style>
+    <script type="text/javascript">
+     //SORTTAUS
+     function sort(ascending, columnClassName, tableId) {
+        var tbody = document.getElementById(tableId).getElementsByTagName(
+                "tbody")[0];
+        var rows = tbody.getElementsByTagName("tr");
+
+        var unsorted = true;
+
+        while (unsorted) {
+            unsorted = false
+
+            for (var r = 0; r < rows.length - 1; r++) {
+                var row = rows[r];
+                var nextRow = rows[r + 1];
+
+                var value = row.getElementsByClassName(columnClassName)[0].innerHTML;
+                var nextValue = nextRow.getElementsByClassName(columnClassName)[0].innerHTML;
+
+                value = value.replace(',', '.'); // in case a comma is used in float number
+                nextValue = nextValue.replace(',', '.');
+
+                if (!isNaN(value)) {
+                    value = parseFloat(value);
+                    nextValue = parseFloat(nextValue);
+                }
+
+                if (ascending ? value > nextValue : value < nextValue) {
+                    tbody.insertBefore(nextRow, row);
+                    unsorted = true;
+                }
+            }
+        }
+    };
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>NHL Stats 2019-2020</h1>
+        <h3><a id="NHL" href="https://www.nhl.com/" target="_blank">Go to NHL Home Page</a></h3>
+        <table id="nhlTable">
+            <thead>
+                <tr>
+                    <th class="team"><a href="javascript:sort(true, 'team', 'nhlTable');">Team</a></th>
+                    <th class="gp"><a href="javascript:sort(false, 'gp', 'nhlTable');">Games Played</a></th>
+                    <th class="wins"><a href="javascript:sort(false, 'wins', 'nhlTable');">Wins</a></th>
+                    <th class="losses"><a href="javascript:sort(false, 'losses', 'nhlTable');">Losses</a></th>
+                    <th class="ot"><a href="javascript:sort(false, 'ot', 'nhlTable');">OT</a></th>
+                    <th class="streak"><a href="javascript:sort(false, 'streak', 'nhlTable');">Current Streak</a></th>
+                    <th class="scored"><a href="javascript:sort(false, 'scored', 'nhlTable');">Goals Scored</a></th>
+                    <th class="against"><a href="javascript:sort(false, 'against', 'nhlTable');">Goals Against</a></th>
+                    <th class="diff"><a href="javascript:sort(false, 'diff', 'nhlTable');">Goals Difference</a></th>
+                </tr>
+            </thead>
+            <tbody id="table">
+            </tbody>
+        </table>
+    </div>
+    <script>
+        //GET NHL DATA
+        var xhr = new XMLHttpRequest();
+        var lista = document.getElementById('lista');
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    var taulukko = JSON.parse(xhr.responseText);
+                    console.dir(taulukko);
+
+                    //LIST NHL DATA IN TABLE
+                    for (let i = 0; i < 4; i++) {
+                        taulukko.records[i].teamRecords.forEach((nhlStats) => {
+                            let goalsDiff = nhlStats.goalsScored - nhlStats.goalsAgainst;
+                            var tr = document.createElement('tr');
+
+                            tr.innerHTML = `<td class="team">${nhlStats.team.name}</td>
+                            <td class="gp">${nhlStats.gamesPlayed}</td>
+                            <td class="wins">${nhlStats.leagueRecord.wins}</td>
+                            <td class="losses">${nhlStats.leagueRecord.losses}</td>
+                            <td class="ot">${nhlStats.leagueRecord.ot}</td>
+                            <td class="streak">${nhlStats.streak.streakNumber} ${nhlStats.streak.streakType}</td>
+                            <td class="scored">${nhlStats.goalsScored}</td>
+                            <td class="against">${nhlStats.goalsAgainst}</td>
+                            <td class="diff">${goalsDiff}</td>`
+
+                            table.appendChild(tr);
+                        })
+                    }
+                }
+                else {
+                    alert("Pyyntö epäonnistui, ei pysty hakee änäri dataa just nyt :/ ");
+                }
+            }
+        }
+        function hae() {
+            xhr.open('GET', 'https://statsapi.web.nhl.com/api/v1/standings');
+            xhr.send();
+        }
+        hae();      
+    </script>
+</body>
+
+</html>
